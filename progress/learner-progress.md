@@ -7,7 +7,7 @@
 - Name: [unset]
 - Preferred learning style: [unset — set during /start: Socratic | Lecture+checkpoints | Build-along]
 - Started: [date]
-- Last session: [date]
+- Last session: 2026-10-02 — instructor planning and support-room experience prototype; learning style still pending.
 
 ## Module status
 
@@ -27,4 +27,16 @@ Status values: not started · in progress · completed · needs review
 - [none yet]
 
 ## Next step
-- Begin Module 01.
+- Test the separate Relay broadband-support prototype in `FDE-01-assignments/Assignment_2_voice_agent/relay/`.
+- Aurora Assignment 2 unchanged. Relay now has an OpenAI/Gemini backend, provider TTS, microphone STT, scoped simulated tools and persistent language state. Five offline tests passed. Keys loaded privately. OpenAI project denied gpt-4o-mini; configured accessible gpt-4.1-mini. Live reasoning from both providers, English and Spanish Gemini audio, OpenAI TTS and synthetic-input STT verified. Microphone and perceived voice quality still need learner rehearsal. Room-native streaming remains future work.
+- Resume the requested 60-minute Module 5 session after selecting a learning style; no comprehension checkpoints completed yet.
+
+## Latest implementation checkpoint
+- 2026-10-02: Replaced Relay push-to-talk with continuous OpenAI transcription and server VAD; automatic playback pause/cancel with heuristic acknowledgment resume. Added bounded Alex → Maya → Alex consultations and a scoped simulated diagnostic tool. Live synthetic streaming and complete two-provider consultation verified. Real microphone, echo, interruption latency and backchannel reliability still need rehearsal. Responses retain buffered cloud TTS; native speech-to-speech remains future work.
+- 2026-10-02: Fixed spoken Spanish selection when English is mentioned as not understood. Added server-enforced specialist invitation consent, dynamic Maya participant lifecycle, and acknowledgment handling for invitation replies. Eight regression tests passed; Aurora unchanged.
+- Live browser verification: Alex requested specialist consent; Maya remained absent until approval, then appeared and responded in Spanish through Gemini with audio playback reaching “Live · speaking.” Real microphone interruption behavior still needs user rehearsal.
+- 2026-10-02: Added expandable live voice-pipeline analytics for FDE class demonstrations: per-agent waterfall, request-to-text / first-audio latency, server LLM/tool/TTS timings, speech queue, playback, interruption/failure states, and optional microphone stop-to-transcript timing. Eight regression tests pass including timing headers. Real OpenAI browser test measured 916 ms to text and 2.14 s to first audio; microphone timing has not been acoustically rehearsed.
+- 2026-10-02: Fixed exact “speak back in English” regression and direct “speak back to Alex” routing; normalized em dashes out of agent speech. Added selectable Maya OpenAI Marin TTS while retaining Gemini reasoning and optional Gemini Kore speech. Prefetches successive agent TTS concurrently with ordered playback; shorter responses and fewer repeated introductions prompted. Eight regression tests pass. Live Spanish Maya response reached audio at 3.23 s; single sample, full-buffer latency remains.
+- 2026-10-02: Changed specialist entry to customer-led escalation. Alex stays with basic support; explicit “add Maya” / “speak to a technical specialist” requests initiate joining. Server blocks proactive handoffs. Nine regression tests passed.
+
+- 2026-10-02: Relocated Relay into Assignment 2 under `relay/`, including private local configuration and virtual environment. Updated Aurora env-loader import and added local ignore rules.

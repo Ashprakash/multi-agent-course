@@ -262,3 +262,7 @@ The mock maps booking completion to SIP BYE and human escalation to SIP REFER. A
 - Use mock mode for rehearsal, evaluation, and scale exercises.
 - Use system TTS while developing to avoid cloud TTS charges.
 - Treat booking tools as mock systems until authentication, validation, idempotency, persistence, and audit controls are added.
+
+## Relay multi-agent classroom demo
+
+The separate [Relay support room](relay/README.md) demonstrates customer-led specialist entry, OpenAI/Gemini reasoning, multilingual voice, interruptions, and expandable pipeline latency analytics. Its code and run instructions live in `relay/`; the existing Aurora implementations remain in place.

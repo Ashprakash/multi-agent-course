@@ -265,4 +265,4 @@ The mock maps booking completion to SIP BYE and human escalation to SIP REFER. A
 
 ## Relay multi-agent classroom demo
 
-The separate [Relay support room](relay/README.md) demonstrates customer-led specialist entry, OpenAI/Gemini reasoning, multilingual voice, interruptions, and expandable pipeline latency analytics. Its code and run instructions live in `relay/`; the existing Aurora implementations remain in place.
+The separate [Relay support room](relay/README.md) demonstrates customer-led specialist entry, OpenAI/Gemini reasoning, multilingual voice, interruptions, and expandable pipeline latency analytics. Follow the [20-minute Relay build-along](relay/BUILD_ALONG_20_MIN.md) to wire text, specialist routing, language and speech live. A [finished-product walkthrough](relay/DEMO_20_MIN.md) is available separately. Its code and run instructions live in `relay/`; the existing Aurora implementations remain in place.

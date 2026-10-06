@@ -55,15 +55,55 @@ class RoomTests(unittest.TestCase):
             events, calls = turn('Please add Maya, speak Spanish please. I do not understand English.', {'text': 'Hola, soy Maya.', 'handoff': None})
             self.assertEqual(calls, ['maya'])
             self.assertEqual(events[0]['language'], 'es')
+            self.assertEqual([e['who'] for e in events if e['type'] == 'speech'], ['alex', 'maya'])
+            self.assertIn('Maya', next(e['text'] for e in events if e['type'] == 'speech'))
             self.assertEqual([e['state'] for e in events if e['type'] == 'participant'], ['connecting', 'connected'])
         finally:
             http.shutdown(); http.server_close(); thread.join()
 
     def test_customer_led_specialist_requests(self):
-        for text in ('Please add Maya', 'Can I speak to a technical specialist?', 'Bring Maya into the call', 'I need a technician', 'Quiero hablar con Maya'):
+        for text in ('Please add Maya', 'Can I speak to a technical specialist?', 'Bring Maya into the call',
+                     'I need a technician', 'Quiero hablar con Maya',
+                     'can I get some help, maybe a technical support who can help me out here? I am not sure if you can help me with that.',
+                     'Could you get me a tech support person?', 'Maya, can you help me?'):
             self.assertTrue(server.customer_requests_specialist(text), text)
-        for text in ('My router has a red light', 'I need technical help', 'Who is Maya?', "Don't add Maya", 'I do not want to speak to Maya'):
+        for text in ('My router has a red light', 'I need technical help', 'Who is Maya?',
+                     "Don't add Maya", 'I do not want to speak to Maya',
+                     'I do not need technical support right now', 'My router needs technical support'):
             self.assertFalse(server.customer_requests_specialist(text), text)
+
+    def test_spoken_specialist_request_joins_maya(self):
+        http = ThreadingHTTPServer(('localhost', 0), server.Handler)
+        thread = threading.Thread(target=http.serve_forever, daemon=True); thread.start()
+        root = f'http://localhost:{http.server_port}'
+        def turn(text, reply):
+            body = json.dumps({'session': 'spoken-request-session', 'text': text}).encode()
+            with patch.object(server, 'agent_reply', return_value=reply) as model:
+                with urlopen(Request(root + '/api/turn', data=body)) as response:
+                    events = [json.loads(line) for line in response]
+            return events, [call.args[0] for call in model.call_args_list]
+        try:
+            basic = {'text': 'Which devices are affected?', 'handoff': None, 'tool': None}
+            _, calls = turn('My router is not working.', basic)
+            self.assertEqual(calls, ['alex'])
+            _, calls = turn('I think it is a Netgear router.', basic)
+            self.assertEqual(calls, ['alex'])
+            events, calls = turn(
+                "can I get some help, maybe a technical support who can help me out here? I'm not sure if you can help me with that.",
+                {'text': 'I can help diagnose the connection.', 'handoff': None, 'tool': None})
+            self.assertEqual(calls, ['maya'])
+            self.assertEqual([e['who'] for e in events if e['type'] == 'speech'], ['alex', 'maya'])
+            self.assertEqual(next(e['reason'] for e in events if e['type'] == 'handoff'), 'joining')
+            self.assertLess(
+                next(i for i, e in enumerate(events) if e['type'] == 'speech' and e['who'] == 'alex'),
+                next(i for i, e in enumerate(events) if e['type'] == 'participant' and e['state'] == 'connecting'))
+            self.assertLess(
+                next(i for i, e in enumerate(events) if e['type'] == 'participant' and e['state'] == 'connected'),
+                next(i for i, e in enumerate(events) if e['type'] == 'speech' and e['who'] == 'maya'))
+            self.assertEqual([e['state'] for e in events if e['type'] == 'participant'], ['connecting', 'connected'])
+            self.assertEqual(server.get_session('spoken-request-session')['specialist'], 'connected')
+        finally:
+            http.shutdown(); http.server_close(); thread.join()
 
     def test_agents_cannot_use_each_others_tools(self):
         session = server.get_session('test-session')

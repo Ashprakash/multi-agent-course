@@ -1,6 +1,6 @@
 # Relay: two-provider voice support room
 
-Relay lives in `FDE-01-assignments/Assignment_2_voice_agent/relay/`, alongside the existing Aurora implementations. Alex uses OpenAI reasoning and TTS; Maya uses Gemini reasoning with selectable OpenAI Marin or Gemini Kore speech. OpenAI transcribes microphone recordings. Both agents keep the selected room language across handoffs and subsequent turns.
+Relay lives in `FDE-01-assignments/Assignment_2_voice_agent/relay/`, alongside the existing Aurora implementations. Alex uses OpenAI reasoning and TTS; Maya uses Gemini reasoning with selectable OpenAI Marin or Gemini Kore speech. OpenAI transcribes the live microphone stream. Both agents keep the selected room language across handoffs and subsequent turns.
 
 ## Run
 
@@ -60,9 +60,9 @@ Alex requests an assessment, Maya uses her scoped diagnostic tool and reports ev
 
 Live verification: a paced synthetic 24 kHz PCM stream through the local proxy produced speech-start, speech-stop, incremental and final transcript events automatically. Both providers completed a three-exchange consultation using simulated evidence. Acoustic interruption latency, echo rejection and acknowledgment heuristics still require a real microphone/speaker rehearsal. Headphones help isolate echo during that rehearsal. Provider TTS currently buffers complete audio, so generation pauses remain; this is not native speech-to-speech.
 
-### Consent-based specialist entry
+### Specialist entry
 
-Live sessions begin with Alex and the customer only. Alex requests permission when technical expertise is needed. A server-side gate prevents Maya reasoning calls until an affirmative response to the pending invitation; ambiguous responses stay with Alex and refusals decline the invitation. The participant card is created on `connecting`; a successful Gemini response marks `connected`, and actual audio playback marks `live`. Failures show a retryable connection failure. These are application/provider lifecycle states, not a WebRTC room connection. The offline scripted rehearsal retains its original fixed cast.
+Live sessions begin with Alex and the customer only. Alex provides basic support until the customer explicitly asks to add Maya or speak to a technical specialist. The server prevents model-initiated entry before that request. After the customer's request, Alex speaks a brief handoff to Maya in the current language. Maya's card is created on `connecting`; a successful Gemini response marks `connected`, and actual audio playback marks `live`. Failures show a retryable connection failure. These are application/provider lifecycle states, not a WebRTC room connection. The offline scripted rehearsal retains its original fixed cast.
 
 Spanish requests are matched to the requested language rather than unrelated language mentions (including “speak in Spanish, please; I do not understand English”). Both agents retain the selected language and case context.
 
@@ -76,6 +76,8 @@ Maya still reasons with Gemini. The live UI now defaults her speech to OpenAI `g
 
 Speech requests now begin as soon as each agent's text arrives, overlapping earlier audio playback. Playback remains ordered and interruption aborts pending requests. Analytics separates TTS time from the subsequent audio queue. Explicit “speak back to Alex” requests route directly to Alex, avoiding an unnecessary spoken handoff. Responses are prompted to be shorter and skip repeated introductions. This still buffers full audio; it does not promise subsecond speech-to-speech latency.
 
-### Customer-led escalation (current behavior)
+### Customer-led escalation
 
-This supersedes the earlier proactive invitation flow. Alex provides basic support without offering or summoning Maya. The customer explicitly asks, for example “Please add Maya” or “Can I speak to a technical specialist?” That request authorizes her entry directly, with connecting and connected events. A router fault or generic request for technical help alone does not invite her. The server blocks attempted model-initiated handoffs while she is absent. Once she joins, the existing agent consultation behavior remains available.
+A router fault or generic request for technical help alone does not invite Maya. The customer can say “Please add Maya,” “Can I speak to a technical specialist?” or “Can I get some help from technical support?” Once she joins, the agents can consult each other within the coordinator's exchange limit.
+
+For the progressive classroom build, follow the [20-minute build-along](BUILD_ALONG_20_MIN.md). The [finished-product walkthrough](DEMO_20_MIN.md) is available separately.

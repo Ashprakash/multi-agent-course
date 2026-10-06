@@ -107,7 +107,7 @@ async function initLiveRoom() {
         if (item.type === 'thinking') { responseRow = analytics.thinking(token, item.who); if (!audio) states(item.who, 'Thinking'); }
         if (item.type === 'tool') { event(`${names[item.who]} → ${item.tool} · simulated`);
           const evidence = document.createElement('p'); evidence.textContent = `${item.result.source}: ${item.result.note || item.result.guidance}`; $('evidence').append(evidence); }
-        if (item.type === 'handoff') event(`${names[item.from]} → ${names[item.to]} · specialist consultation`);
+        if (item.type === 'handoff') event(`${names[item.from]} → ${names[item.to]} · ${item.reason === 'joining' ? 'joining the call' : 'specialist consultation'}`);
         if (item.type === 'speech') {
           item.analytics = responseRow;
           analytics.update(responseRow, {text: performance.now(), ...item.timing, status: 'Queued for speech'});

@@ -119,12 +119,20 @@ def invitation_answer(text):
 
 
 def customer_requests_specialist(text):
-    target = r'(?:maya|(?:a |the |your )?(?:technical (?:specialist|assistant|support agent)|specialist|technician))'
-    pattern = (r'\b(?:add|invite|bring|connect(?: me)?(?: to| with)?|speak(?: back)? (?:to|with)|talk (?:to|with)|get(?: me)?|need|want)\s+(?:in\s+)?' + target + r'\b'
-               r'|\b(?:hablar con|llama a|invita a)\s+(?:maya|(?:un |el )?especialista)\b')
-    for match in re.finditer(pattern, text, re.I):
-        prefix = text[max(0, match.start() - 30):match.start()]
-        if not re.search(r"(?:don't|don’t|do not|not|never|no)\s*(?:want to\s*)?$", prefix, re.I):
+    # ASR often inserts hedges between the request and the role. Require both
+    # a request and a named specialist, but allow ordinary words in between.
+    role = r'\b(?:maya|tech(?:nical)? support(?: (?:agent|person|specialist))?|technical (?:specialist|assistant|agent|expert)|support (?:agent|specialist)|specialist|technician)\b'
+    request = (r'\b(?:(?:can|could|may)\s+(?:i|you)\s+(?:please\s+)?(?:get|have|bring|add|connect|transfer|speak|talk)'
+               r'|(?:please\s+)?(?:add|invite|bring|connect|transfer|speak|talk|get me)'
+               r'|i\s+(?:need|want|would like|would need)|i\s*\u2019d\s+like|quiero\s+hablar\s+con|(?:llama|invita)\s+a)\b')
+    for match in re.finditer(role, text, re.I):
+        prefix = text[max(0, match.start() - 110):match.start()]
+        if re.search(r"\b(?:don't|don\u2019t|do not|never|not yet|no need|not interested)\b[^.!?]{0,65}$", prefix, re.I):
+            continue
+        if re.search(request + r'[^.!?]{0,100}$', prefix, re.I):
+            return True
+        # Addressing Maya directly is an explicit request for the specialist.
+        if re.match(r'^\s*maya\s*[,!:]\s*(?:can|could|please|would|what|how)\b', text, re.I):
             return True
     return False
 
@@ -135,6 +143,17 @@ def basic_support_reply(language):
             'hi': 'पहले यह समझते हैं: समस्या सभी डिवाइस पर है या केवल एक पर?',
             'ta': 'முதலில் இதைப் பார்ப்போம். எல்லா சாதனங்களிலும் சிக்கலா, அல்லது ஒன்றில் மட்டுமா?'}[language]
     return {'text': text, 'handoff': None, 'tool': None, 'next': text}
+
+
+def specialist_join_bridge(language):
+    # The coordinator acknowledges an explicit customer request before opening
+    # Maya's provider turn. This stays short so the drop-in does not add a model call.
+    return {
+        'en': 'Of course. Maya, please join us and help with the connection issue.',
+        'es': 'Claro. Maya, únete a la llamada y ayúdanos con el problema de conexión.',
+        'hi': 'ज़रूर। माया, कृपया कॉल में जुड़ें और कनेक्शन की समस्या में मदद करें।',
+        'ta': 'நிச்சயமாக. மாயா, அழைப்பில் இணைந்து இந்த இணைப்புச் சிக்கலுக்கு உதவுங்கள்.'
+    }[language]
 
 
 KNOWLEDGE = {
@@ -405,6 +424,14 @@ class Handler(BaseHTTPRequestHandler):
                 emit({'type': 'language', 'language': session['language'], 'changed': previous_language != session['language']})
                 emit({'type': 'invitation', 'pending': session['invite_pending']})
                 if joining:
+                    bridge = specialist_join_bridge(session['language'])
+                    emit({'type': 'thinking', 'who': 'alex'})
+                    session['history'].append({'speaker': 'alex', 'text': bridge})
+                    session['history'] = session['history'][-30:]
+                    emit({'type': 'speech', 'who': 'alex', 'text': bridge, 'language': session['language'],
+                          'next': bridge, 'step': session['step'],
+                          'timing': {'llmMs': 0, 'toolMs': 0, 'calls': 0}})
+                    emit({'type': 'handoff', 'from': 'alex', 'to': 'maya', 'reason': 'joining'})
                     emit({'type': 'participant', 'who': 'maya', 'name': 'Maya', 'role': 'Gemini · technical support', 'state': 'connecting'})
                 try:
                     for hop in range(3):
